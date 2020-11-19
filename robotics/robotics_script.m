@@ -1,0 +1,250 @@
+clear all; clc;
+%% B
+
+syms theta1 theta2 theta3 theta4 theta5 theta6 theta7;
+
+%DH Paratemers
+DH_param_table = [ 0,   0,      89/200, theta1]
+                [ -90,  3/20,   0, theta2]
+                [ 0,    9/10,   0, theta3]
+                [ -90,  23/200, 159/200, theta4]
+                [ 90,   0,      0, theta5]
+                [ -90,  0,      17/200, theta6]
+                [0,     0,      0.075, theta7];
+                
+%% C
+
+%calculate link transform matricies
+ T_01 = link_transform(0,   0,  89/200, theta1)
+ T_12 = link_transform(-90,    3/20,       0, theta2)
+ T_23 = link_transform( 0, 9/10,       0, theta3)
+ T_34 = link_transform(-90,      23/200, 159/200, theta4)
+ T_45 = link_transform(90,      0,       0, theta5)
+ T_56 = link_transform(-90,      0,  17/200, theta6)
+ T_67 = link_transform(0,0,0.075,theta7)
+ 
+ %% D
+
+ %%% Simple link algebra 
+ 
+ %%% answer D transform matrix linking base and tool
+ T_07 = T_01*T_12*T_23*T_34*T_45*T_56*T_67
+ 
+ %% E
+    %%% Fuck lol 
+ %% F 
+   
+ theta1 = 0;theta2=0;theta3=0;theta4=0;theta5=0;theta6=0;theta7=0; 
+
+ T_01 = link_transform(0,   0,  89/200, theta1);
+ T_12 = link_transform(-90,    3/20,       0, theta2);
+ T_23 = link_transform( 0, 9/10,       0, theta3);
+ T_34 = link_transform(-90,      23/200, 159/200, theta4);
+ T_45 = link_transform(90,      0,       0, theta5);
+ T_56 = link_transform(-90,      0,  17/200, theta6);
+ T_67 = link_transform(0,0,0.075,theta7);
+
+
+ T_07_initial = T_01*T_12*T_23*T_34*T_45*T_56*T_67 %plot this for figure 
+
+ %%% Now we need to plot this. We will do this with the help of the
+ %%% robotics toolbox. 
+ 
+ 
+ % First we define the links for our robot. To do this we input the DH
+ % paramaters
+
+    LA1 = Link( [0    0.445    0.15      -pi/2 ]);
+    LA2 = Link( [0    0        0.9       0     ]);        
+    LA3 = Link( [0    0        0.115     -pi/2 ]);   
+    LA4 = Link( [0    0.795    0         pi/2  ]);  
+    LA5 = Link( [0    0        0         -pi/2 ]);
+    LA6 = Link( [0    0.085    0         0     ]); 
+    LA7 = Link( [0    0.075     0       0      ]);
+
+
+    LA = [LA1 LA2 LA3 LA4 LA5 LA6 LA7];
+
+    ABBRobot = SerialLink(LA,'name','ABB');
+   
+
+
+    %Deg to Radians
+    theta1 = deg2rad(0);
+    theta2 = deg2rad(0);
+    theta3 = deg2rad(0);
+    theta4 = deg2rad(0);
+    theta5 = deg2rad(0);
+    theta6 = deg2rad(0);
+    theta7 = deg2rad(0);
+
+    %Link transformation matrix for position O from base frame
+    T_pos_o = [1  0 0 1;
+             0 -1 0 0.05;
+             0  0 -1 1;
+             0  0 0 1];
+         
+    %Calulate angles from the built in inverse kinematics function     
+    thetas_o = ABBRobot.ikine(T_pos_o);
+    
+    %Generate Figure
+    ABBRobot.plot(thetas_o); 
+
+    
+ %% Task G
+ 
+    %Link transformation matrix for position A form base frame 
+    T_pos_a = [1  0 0 1.125;
+                     0 -1 0 0.025;
+                     0  0 -1 0.308;
+                     0  0 0 1];
+    
+ 
+    %Link transformation matrix for position O from base frame 
+    T_pos_o = [1  0 0 1;
+                 0 -1 0 0.05;
+                 0  0 -1 1;
+                 0  0 0 1];
+
+   
+   % returns an array of the 7 joint angles
+   thetas_o = ABBRobot.ikine(T_pos_o); %Joint angles for starting position of the tool
+   thetas_a = ABBRobot.ikine(T_pos_a);
+   
+   %% H. Jacobian  
+
+   % we need to make the T_07 but with joint1 == 0 and joint 2 == 0 
+   
+    syms theta1 theta2 theta3 theta4 theta5 theta6 theta7;
+
+    %Here we specify the values of theta 1 and theta 2. Because they are
+    %constants so we need to make them not effect the result
+    theta1 = 0; theta_2 = 0; 
+
+    T_01 = link_transform(0,   0,  89/200, theta1);
+    T_12 = link_transform(-90,    3/20,       0, theta2);
+    T_23 = link_transform( 0, 9/10,       0, theta3);
+    T_34 = link_transform(-90,      23/200, 159/200, theta4);
+    T_45 = link_transform(90,      0,       0, theta5);
+    T_56 = link_transform(-90,      0,  17/200, theta6);
+    T_67 = link_transform(0,0,0.075,theta7); 
+
+    T_07_jacobi = T_01*T_12*T_23*T_34*T_45*T_56*T_67;
+
+    jacobian_matrix = diff(T_07_jacobi); % differntate T to get jacobian 
+    val = det(jacobian_matrix); % take determinite
+    Jacobian = double(val); % Show the result of taking determinate of jacobian matrix 
+    %0 means it is singular
+
+ %% Task 2 Trajectory Planning
+
+   % This was adjusted untill all of the maximum rotation speeds were under
+   % the value specified by the datasheet
+
+   thetas_o = ABBRobot.ikine(T_pos_o); %Joint angles for starting position of the tool
+   thetas_a = ABBRobot.ikine(T_pos_a);
+   
+   tf = 0.29;
+   
+   %Converting Radians to Deg's
+   thetas_o = rad2deg(thetas_o)
+   thetas_a = rad2deg(thetas_a);
+   
+   %defining constants for trajectory planning
+   A0 = thetas_o; %initial position
+   A1 = 0;
+   A2 = (thetas_o - thetas_a)*(3/tf^2);
+   A3 = (thetas_o - thetas_a)*(-2/tf^3);
+   
+   theta_traj = @(t) A0 + A1.*t + A2.*t^2 + A3.*(t^3);
+   theta_dot_traj = @(t) A1 + 2*A2.*t + 3*A3.*(t^2);
+   
+   figure(2) 
+   fplot(theta_traj,[0 0.5]); %Time cant be negative so plot from zero
+   title('Theta trajectory')
+   legend({'theta 1','theta 2','theta 3','theta 4','theta 5','theta 6','theta 7'})
+   xlabel("Time (s)")
+   ylabel("Theta (deg)")
+   figure(3)
+   fplot(theta_dot_traj,[0 0.5]);
+   title('Theta dot trajectory')
+   xlabel("Time (s)")
+   ylabel("Theta dot (deg/s)")
+   legend({'theta dot 1','theta dot 2','theta dot 3','theta dot 4','theta dot 5','theta dot 6','theta dot 7'})
+   
+    positions = [];
+   %plot position of the tool between time
+   j = 0;
+   for i = 0:0.01:tf+0.02
+       j = j + 1;
+       theta_arr = theta_traj(i);
+       T_tool = ABBRobot.fkine(deg2rad(theta_arr));
+       positions(j,:) = [T_tool.t(1), T_tool.t(2), T_tool.t(3)];
+   end
+   figure(4)
+   plot(0:0.01:tf+0.02, positions);
+   title('Tool positions vs time ')
+   xlabel("Time (s)")
+   ylabel("Position (m)")
+   legend({'Px','Py','Pz'})
+   
+  
+   thetas = ABBRobot.ikine(T_pos_o);
+   %Converting Radians to Deg's
+   thetas = rad2deg(thetas_o);
+
+   %Displaying the Inverse Angles
+   thetas;
+   
+   
+   %% tool position crude animation   
+   
+   thetas_o = deg2rad(thetas_o);
+   thetas_a = deg2rad(thetas_a);
+   
+   T_pos_b = [1  0 0 1.525;
+                 0 -1 0 0.025;
+                 0  0 -1 0.308;
+                 0  0 0 1];
+             
+   T_pos_c = [1  0 0 1.525;
+             0 -1 0 0.325;
+             0  0 -1 0.308;
+             0  0 0 1];
+         
+   T_pos_d = [1  0 0 1.125;
+             0 -1 0 0.325;
+             0  0 -1 0.308;
+             0  0 0 1];
+         
+   thetas_b = ABBRobot.ikine(T_pos_b);
+   thetas_c = ABBRobot.ikine(T_pos_c);
+   thetas_d = ABBRobot.ikine(T_pos_d);
+
+   %animation showing a b c and d tool positions 
+   pause(5)
+   j = 0; 
+   for i = 1:200
+    if j == 1
+        ABBRobot.animate(thetas_a);
+    elseif j == 2 
+        ABBRobot.animate(thetas_b);
+    elseif j == 3
+        ABBRobot.animate(thetas_c);
+    elseif j == 4
+        ABBRobot.animate(thetas_d);
+        j = 0; % reset loop 
+    end
+    j = j + 1; 
+    pause(0.5)
+   end
+   
+   
+
+    
+ 
+ 
+ 
+ 
+
+
