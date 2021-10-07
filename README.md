@@ -2,4 +2,4 @@
 
 ## Basic Robotic Arm Trajectory Planning Simulation Using Matlab
 
-### *T
+### - Requires Robotics Toolbox
